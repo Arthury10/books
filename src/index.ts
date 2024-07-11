@@ -87,6 +87,9 @@ class Main {
         case "Meu Perfil":
           this.handleMyProfile();
           break;
+        case "Modificar Livro":
+          this.handleUpdateBook();
+          break;
         case "Sair":
           this.logout();
           break;
@@ -121,6 +124,7 @@ class Main {
       menuAdmin: [
         "Listar Livros",
         "Cadastrar Livro",
+        "Modificar Livro",
         "Listar Usuários",
         "Cadastrar Usuário",
         "Listar Alugueis",
@@ -244,6 +248,19 @@ class Main {
     const users = this.userService.findAllUsers();
     UserUI.showUsers(users);
     Utils.pauseConsole();
+  }
+
+  private handleUpdateBook() {
+    const books = this.bookService.findAllBooks();
+    const data = BookUI.update(books);
+
+    const bookUpdated = this.bookService.updateBook(data);
+
+    if (bookUpdated) {
+      BookUI.success();
+    } else {
+      BookUI.error();
+    }
   }
 }
 

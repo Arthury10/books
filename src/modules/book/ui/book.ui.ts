@@ -1,5 +1,6 @@
 import Book from "src/modules/book/model/book.model";
 import Utils from "src/utils";
+import { UpdateBookType } from "../types";
 
 class BookUI {
   static list(books: Book[]): void {
@@ -69,6 +70,51 @@ class BookUI {
       year,
       pages,
     };
+  }
+
+  public static update(books: Book[]): UpdateBookType {
+    Utils.clearConsole();
+
+    Utils.spaceConsole(1, { separator: "-", size: 50 });
+    Utils.textConsole("Atualização de livro");
+    Utils.spaceConsole(1, { separator: "-", size: 50 });
+    this.list(books);
+    Utils.spaceConsole(1, { separator: "-", size: 50 });
+
+    const id = Utils.getNumberInput("Id do livro (Index)");
+
+    const bookToUpdate = books[id];
+
+    const name = Utils.getInput("Título");
+    const author = Utils.getInput("Autor");
+    const year = Utils.getNumberInput("Ano de publicação");
+    const pages = Utils.getNumberInput("Número de páginas");
+
+    return {
+      id: bookToUpdate?.id,
+      update: {
+        name,
+        author,
+        release_year: year,
+        pages,
+      },
+    };
+  }
+
+  public static success(): void {
+    Utils.clearConsole();
+
+    Utils.spaceConsole(1, { separator: "-", size: 50 });
+    Utils.textConsole("Operação realizada com sucesso");
+    Utils.spaceConsole(1, { separator: "-", size: 50 });
+  }
+
+  public static error(): void {
+    Utils.clearConsole();
+
+    Utils.spaceConsole(1, { separator: "-", size: 50 });
+    Utils.textConsole("Erro ao realizar operação");
+    Utils.spaceConsole(1, { separator: "-", size: 50 });
   }
 
   private static show(book: Book): void {

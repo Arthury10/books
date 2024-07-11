@@ -50,9 +50,11 @@ class BookService {
       return null;
     }
 
+    const validateValues = Object.entries(update).filter(Boolean);
+
     const updatedBook = new Book({
       ...book,
-      ...update,
+      ...validateValues,
       updated_at: new Date(),
     });
 
