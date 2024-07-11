@@ -4,7 +4,6 @@ import Utils from "src/utils";
 import RentService from "../rent.service";
 import BookService from "src/modules/book/book.service";
 import UserService from "src/modules/user/user.service";
-import { RentStatus } from "../types";
 
 class RentUI {
   constructor(
@@ -86,6 +85,25 @@ class RentUI {
       book_id: bookRented.id,
     });
 
+    this.bookService.updateBook({
+      id: bookRented.id,
+      update: {
+        rented: true,
+        totalRents: (bookRented.totalRents ?? 0) + 1,
+      },
+    });
+
+    const user = this.userService.findUserById(userId);
+
+    this.userService.updateUser({
+      id: userId,
+      update: {
+        totalBooksRented: user?.totalBooksRented
+          ? user.totalBooksRented + 1
+          : 1,
+      },
+    });
+
     if (!rent) {
       this.error();
       return;
@@ -111,7 +129,7 @@ class RentUI {
       Autor: book.author,
       Ano: book.release_year,
       Paginas: book.pages,
-      Estado: book.rented ? "Indisponivel" : "Disponivel",
+      Estado: rents.find((rent) => rent.book_id === book.id)?.status,
       "Entrega Data": rents.find((rent) => rent.book_id === book.id)
         ?.devolution_date,
     }));
@@ -169,7 +187,8 @@ class RentUI {
     const updatedRent = this.rentService.updateRent({
       id: rent.id,
       update: {
-        status: RentStatus.RETURNED,
+        status: "inactive",
+        devolution_date: new Date(),
       },
     });
 
@@ -198,14 +217,6 @@ class RentUI {
     Utils.spaceConsole(1, { separator: "-", size: 50 });
     Utils.textConsole("Erro ao realizar operação");
     Utils.spaceConsole(1, { separator: "-", size: 50 });
-  }
-
-  private simpleViewColumnTableRent(rent: Rent[], fields: string[]): void {
-    Utils.spaceConsole(1, { separator: "-", size: 50 });
-    Utils.textConsole("Lista de livros alugados");
-    Utils.spaceConsole(1, { separator: "-", size: 50 });
-
-    Utils.formatListTable(rent, fields);
   }
 }
 

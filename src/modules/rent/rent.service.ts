@@ -20,6 +20,7 @@ class RentService {
       id: uuidv4(),
       created_at: new Date(),
       updated_at: new Date(),
+      status: "active",
     });
 
     const createdRent = this.repository.createData(newRent);

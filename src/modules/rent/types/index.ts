@@ -1,10 +1,6 @@
 import Rent from "../model/rent.model";
 
 export type FilterType = (rent: Rent) => boolean;
-export enum RentStatus {
-  RENTED = "active",
-  RETURNED = "inactive",
-}
 
 export interface CreateRentType {
   user_id: string;
@@ -24,6 +20,5 @@ export interface IRent {
   devolution_date: Date;
   created_at: Date;
   updated_at: Date;
-  returned_at?: Date | null;
-  status?: RentStatus;
+  status?: "active" | "inactive";
 }

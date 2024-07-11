@@ -8,12 +8,12 @@ class UserUI {
   constructor(
     private readonly userService: UserService,
     private readonly bookService: BookService,
-    private readonly rentService: RentService,
+    private readonly rentService: RentService
   ) {}
 
-   async myProfile(id: string) {
+  async myProfile(id: string) {
     const user = this.userService.findUserById(id);
-    if(!user) {
+    if (!user) {
       Utils.textConsole("Usuário não encontrado");
       return;
     }
@@ -21,15 +21,17 @@ class UserUI {
     Utils.textConsole("Detalhes do usuário");
     Utils.spaceConsole(1, { separator: "-", size: 50 });
     const input = Utils.getNumberInput(
-      "Visualizar em (1 - coluna | 2 - linha)"
+      "Visualizar em (1 - coluna | 2 - linha | 3 - tabela (Resumo))"
     );
 
     if (input === 1) {
       Utils.formatListViewColumn([user]);
-    } else {
+    } else if (input === 2) {
       Utils.formatListViewRow([user]);
+    } else {
+      Utils.formatListTable([user]);
     }
-    
+
     Utils.spaceConsole(1, { separator: "-", size: 50 });
     Utils.textConsole("Gostaria de voltar ao menu ou editar seu perfil?");
     Utils.textConsole("1 - Voltar");
@@ -42,7 +44,9 @@ class UserUI {
       const name = Utils.getInput("Nome: ");
       const email = Utils.getInput("Email: ");
       const password = Utils.getInput("Senha: ");
-      const role = Utils.getInput("Permissão: (user/admin)") as "user" | "admin";
+      const role = Utils.getInput("Permissão: (user/admin)") as
+        | "user"
+        | "admin";
 
       const updatedUser = this.userService.updateUser({
         id: user.id,
@@ -61,12 +65,12 @@ class UserUI {
 
       this.success();
     }
-    
+
     Utils.pauseConsole();
     Utils.clearConsole();
   }
 
-  public  list(): void {
+  public list(): void {
     const users = this.userService.findAllUsers();
 
     Utils.clearConsole();
@@ -125,8 +129,9 @@ class UserUI {
     const name = Utils.getInput("Nome: ");
     const email = Utils.getInput("Email: ");
     const password = Utils.getInput("Senha: ");
-    const role = Utils.getInput("Permissão: (user/admin) ").toLowerCase() as "user" | "admin";
-
+    const role = Utils.getInput("Permissão: (user/admin) ").toLowerCase() as
+      | "user"
+      | "admin";
 
     const createdUser = this.userService.createUser({
       name,
@@ -170,7 +175,9 @@ class UserUI {
     const name = Utils.getInput("Nome: ");
     const email = Utils.getInput("Email: ");
     const password = Utils.getInput("Senha: ");
-    const role = Utils.getInput("Permissão: (user/admin) ").toLowerCase() as "user" | "admin";
+    const role = Utils.getInput("Permissão: (user/admin) ").toLowerCase() as
+      | "user"
+      | "admin";
 
     const updatedUser = this.userService.updateUser({
       id: user.id,

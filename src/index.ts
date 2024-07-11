@@ -48,7 +48,7 @@ class Main {
       const options = this.Inputs(this._inputType);
 
       Utils.spaceConsole(1, { separator: "-", size: 50 });
-      options.forEach((option, index) => {
+      options.forEach((option) => {
         Utils.textConsole(`${option.id} - ${option.name}`);
       });
       Utils.spaceConsole(1, { separator: "-", size: 50 });
@@ -188,9 +188,11 @@ class Main {
   private logout() {
     this._inputType = "initial";
     this.authService.logout();
+    Utils.clearConsole();
   }
 
   private handleRegister() {
+    Utils.clearConsole();
     const data = AuthUI.register();
     const user = this.userService.createUser(data);
 
@@ -201,6 +203,7 @@ class Main {
     }
 
     Utils.pauseConsole();
+    Utils.clearConsole();
   }
 }
 

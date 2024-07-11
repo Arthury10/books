@@ -1,4 +1,4 @@
-import { IRent, RentStatus } from "../types";
+import { IRent } from "../types";
 
 class Rent implements IRent {
   public readonly id: string;
@@ -7,7 +7,7 @@ class Rent implements IRent {
   public readonly devolution_date: Date;
   public readonly created_at: Date;
   public readonly updated_at: Date;
-  public readonly status?: RentStatus;
+  public readonly status: "inactive" | "active";
 
   constructor(data: IRent) {
     this.id = data.id;
@@ -16,7 +16,7 @@ class Rent implements IRent {
     this.devolution_date = data.devolution_date;
     this.created_at = data.created_at;
     this.updated_at = data.updated_at;
-    this.status = data.status ?? RentStatus.RENTED;
+    this.status = data.status ?? "active";
   }
 }
 
