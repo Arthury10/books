@@ -1,80 +1,74 @@
-import Database from "../../db";
+import Repository from "src/repository";
 import User from "./model/user.model";
+import { v4 as uuidv4 } from "uuid";
+import { CreateUserType, FilterTypes, UpdateUserType } from "./types";
 
 class UserService {
-  constructor(private readonly database: Database) {}
+  constructor(
+    private readonly repository: Repository<User> = new Repository<User>(
+      "users"
+    )
+  ) {}
 
-  async createUser(
-    name: string,
-    email: string,
-    password: string,
-    role: "admin" | "user"
-  ): Promise<User | null> {
-    const sql = `INSERT INTO users (name, email, password, role) VALUES (?, ?, ?, ?);`;
-    try {
-      const result = await this.database.query(sql, [name, email, password]);
-      console.log("Usuário criado com sucesso.");
+  createUser(data: CreateUserType): User {
+    const newUser = new User({
+      ...data,
+      id: uuidv4(),
+      created_at: new Date(),
+      updated_at: new Date(),
+    });
 
-      return new User(
-        result.insertId,
-        name,
-        email,
-        password,
-        role,
-        new Date(),
-        new Date()
-      );
-    } catch (error: any) {
-      console.error("Erro ao criar usuário:", error);
-      throw new Error(`Não foi possível criar o usuário: ${error.message}`);
-    }
+    const createdUser = this.repository.createData(newUser);
+
+    return createdUser;
   }
 
-  async getUsers(): Promise<User[]> {
-    const sql = "SELECT * FROM users;";
-    try {
-      const users = await this.database.query(sql);
-      return users.map(
-        (user: any) =>
-          new User(
-            user.id,
-            user.name,
-            user.email,
-            user.password,
-            user.role,
-            new Date(user.created_at),
-            new Date(user.updated_at)
-          )
-      );
-    } catch (error: any) {
-      console.error("Erro ao buscar usuários:", error);
-      throw new Error(`Não foi possível buscar os usuários: ${error.message}`);
+  findAllUsers(filter?: FilterTypes): User[] {
+    const users = this.repository.findAll();
+
+    if (filter) {
+      return users.filter(filter).map((user) => new User(user));
     }
+
+    return users.map((user) => new User(user));
   }
 
-  async getUserById(id: number): Promise<User | null> {
-    const sql = "SELECT * FROM users WHERE id = ?;";
-    try {
-      const result = await this.database.query(sql, [id]);
-      if (result.length > 0) {
-        const user = result[0];
-        return new User(
-          user.id,
-          user.name,
-          user.email,
-          user.password,
-          user.role,
-          new Date(user.created_at),
-          new Date(user.updated_at)
-        );
-      } else {
-        console.warn(`Usuário com ID ${id} não encontrado.`);
-        return null;
-      }
-    } catch (error: any) {
-      console.error(`Erro ao buscar usuário com ID ${id}:`, error);
-      throw new Error(`Não foi possível buscar o usuário: ${error.message}`);
+  findUserById(id: string): User | null {
+    const result = this.repository.findById(id);
+    if (!result) {
+      console.error(`Usuário com ID ${id} não encontrado`);
+      return null;
     }
+
+    const user = new User(result);
+    return user;
+  }
+
+  updateUser({ id, update }: UpdateUserType): User {
+    const user = this.findUserById(id);
+    if (!user) {
+      throw new Error(`Usuário com ID ${id} não encontrado`);
+    }
+
+    const updatedUser = new User({
+      ...user,
+      ...update,
+      updated_at: new Date(),
+    });
+
+    const result = this.repository.updateData(id, updatedUser);
+
+    return result;
+  }
+
+  deleteUser(id: string): User | null {
+    const user = this.findUserById(id);
+    if (!user) {
+      return null;
+    }
+
+    this.repository.deleteData(id);
+    return user;
   }
 }
 
