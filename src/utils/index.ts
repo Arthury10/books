@@ -55,6 +55,9 @@ class Utils {
         this.spaceConsole(1, { separator: "-", size: 50 });
       }
       Object.entries(user).forEach(([key, value]) => {
+        if(key === "password"){
+          return;
+        }
         if (
           key.toLowerCase().includes("date") ||
           key.toLowerCase().includes("at")
@@ -75,6 +78,9 @@ class Utils {
         this.spaceConsole(1, { separator: "-", size: 50 });
       }
       Object.entries(user).forEach(([key, value], index) => {
+        if(key === "password"){
+          return;
+        }
         if (
           key.toLowerCase().includes("date") ||
           key.toLowerCase().includes("at")
@@ -121,6 +127,17 @@ class Utils {
 
   static Capitalize(text: string): string {
     return text.charAt(0).toUpperCase() + text.slice(1);
+  }
+
+  static validateEmptyFields(fields: {[key: string]: any}): {[key: string]: any} {
+    let newFields = {...fields};
+    Object.entries(fields).forEach(([key, value]) => {
+      if (!value || value === "" || value === 0) {
+        delete newFields[key as keyof typeof fields];
+      } 
+    })
+
+    return newFields;
   }
 }
 

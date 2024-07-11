@@ -1,9 +1,19 @@
 import Book from "src/modules/book/model/book.model";
 import Utils from "src/utils";
-import { UpdateBookType } from "../types";
+import BookService from "../book.service";
+import UserService from "src/modules/user/user.service";
+import RentService from "src/modules/rent/rent.service";
 
 class BookUI {
-  static list(books: Book[]): void {
+  constructor(
+    private readonly bookService: BookService,
+    private readonly userService: UserService,
+    private readonly rentService: RentService,
+  ) {}
+
+   public list(): void {
+    const books = this.bookService.findAllBooks();
+
     Utils.clearConsole();
 
     Utils.spaceConsole(1, { separator: "-", size: 50 });
@@ -26,6 +36,7 @@ class BookUI {
         Paginas: book.pages,
         Estado: book.rented ? "Indisponivel" : "Disponivel",
       }));
+
       Utils.formatListTable(formatBooks);
       Utils.textConsole("Gostaria de ver detalhes de algum livro? (s/n)");
       Utils.textConsole("1 - Sim");
@@ -45,43 +56,54 @@ class BookUI {
         this.show(book);
       }
     }
+
+    Utils.pauseConsole();
+    Utils.clearConsole();
   }
 
-  static create(): {
-    title: string;
-    author: string;
-    year: number;
-    pages: number;
-  } {
+   public create(): void {
     Utils.clearConsole();
 
     Utils.spaceConsole(1, { separator: "-", size: 50 });
     Utils.textConsole("Cadastro de livro");
     Utils.spaceConsole(1, { separator: "-", size: 50 });
 
-    const title = Utils.getInput("Título");
+    const name = Utils.getInput("Título");
+    const description = Utils.getInput("Descrição");
     const author = Utils.getInput("Autor");
-    const year = Utils.getNumberInput("Ano de publicação");
+    const release_year = Utils.getNumberInput("Ano de publicação");
     const pages = Utils.getNumberInput("Número de páginas");
 
-    return {
-      title,
+
+    const newBook = this.bookService.createBook({
+      name,
+      description,
       author,
-      year,
+      release_year,
       pages,
-    };
+    });
+
+    if (newBook) {
+      this.success();
+    } else {
+      this.error();
+    }
+
+    Utils.pauseConsole();
+    Utils.clearConsole();
   }
 
-  public static update(books: Book[]): UpdateBookType {
+  public update(): void {
+    const books = this.bookService.findAllBooks();
     Utils.clearConsole();
 
     Utils.spaceConsole(1, { separator: "-", size: 50 });
     Utils.textConsole("Atualização de livro");
     Utils.spaceConsole(1, { separator: "-", size: 50 });
-    this.list(books);
+    this.simpleViewColumnTable(books, ["name", "author", "release_year"]);
     Utils.spaceConsole(1, { separator: "-", size: 50 });
 
-    const id = Utils.getNumberInput("Id do livro (Index)");
+    const id = Utils.getNumberInput("Indetificador do livro (Index)");
 
     const bookToUpdate = books[id];
 
@@ -90,7 +112,7 @@ class BookUI {
     const year = Utils.getNumberInput("Ano de publicação");
     const pages = Utils.getNumberInput("Número de páginas");
 
-    return {
+    const updatedBook = this.bookService.updateBook({
       id: bookToUpdate?.id,
       update: {
         name,
@@ -98,10 +120,47 @@ class BookUI {
         release_year: year,
         pages,
       },
-    };
+    });
+    
+    
+    if (updatedBook) {
+      Utils.formatListViewColumn([updatedBook])
+      this.success();
+    } else {
+      this.error();
+    }
+    Utils.pauseConsole();
+    Utils.clearConsole();
   }
 
-  public static success(): void {
+  public delete(): void {
+    const books = this.bookService.findAllBooks();
+    Utils.clearConsole();
+
+    Utils.spaceConsole(1, { separator: "-", size: 50 });
+    Utils.textConsole("Exclusão de livro");
+    Utils.spaceConsole(1, { separator: "-", size: 50 });
+    this.simpleViewColumnTable(books, ["name", "author", "release_year"]);
+    Utils.spaceConsole(1, { separator: "-", size: 50 });
+
+    const id = Utils.getNumberInput("Indetificador do livro (Index)");
+
+    const bookToDelete = books[id];
+
+    const deletedBook = this.bookService.deleteBook(bookToDelete?.id);
+
+    if (deletedBook) {
+      Utils.formatListViewColumn([deletedBook]);
+      this.success();
+    } else {
+      this.error();
+    }
+
+    Utils.pauseConsole();
+    Utils.clearConsole();
+  }
+
+  private success(): void {
     Utils.clearConsole();
 
     Utils.spaceConsole(1, { separator: "-", size: 50 });
@@ -109,7 +168,7 @@ class BookUI {
     Utils.spaceConsole(1, { separator: "-", size: 50 });
   }
 
-  public static error(): void {
+  private error(): void {
     Utils.clearConsole();
 
     Utils.spaceConsole(1, { separator: "-", size: 50 });
@@ -117,7 +176,7 @@ class BookUI {
     Utils.spaceConsole(1, { separator: "-", size: 50 });
   }
 
-  private static show(book: Book): void {
+  private show(book: Book): void {
     Utils.clearConsole();
 
     Utils.spaceConsole(1, { separator: "-", size: 50 });
@@ -128,6 +187,14 @@ class BookUI {
     );
     Utils.formatListTable([book], fieldsAllow);
     Utils.spaceConsole(1, { separator: "-", size: 50 });
+  }
+
+  private simpleViewColumnTable(books: Book[], fields: string[]): void {
+    Utils.spaceConsole(1, { separator: "-", size: 50 });
+    Utils.textConsole("Lista de livros");
+    Utils.spaceConsole(1, { separator: "-", size: 50 });
+
+    Utils.formatListTable(books, fields);
   }
 }
 

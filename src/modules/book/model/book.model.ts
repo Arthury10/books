@@ -23,10 +23,10 @@ class BookModel implements IBook {
     this.description = data.description;
     this.created_at = data.created_at;
     this.updated_at = data.updated_at;
-    this.rented = data.rented;
+    this.rented = data.rented ?? false;
     this.rented_at = data.rented_at;
     this.devolution_date = data.devolution_date;
-    this.totalRents = data.totalRents;
+    this.totalRents = data.totalRents ?? 0;
   }
 }
 

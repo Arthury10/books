@@ -2,6 +2,7 @@ import Repository from "src/repository";
 import Book from "./model/book.model";
 import { v4 as uuidv4 } from "uuid";
 import { FilterType, CreateBookType, UpdateBookType } from "./types";
+import Utils from "src/utils";
 
 class BookService {
   constructor(
@@ -50,14 +51,14 @@ class BookService {
       return null;
     }
 
-    const validateValues = Object.entries(update).filter(Boolean);
+    const validateFields = Utils.validateEmptyFields(update);
 
     const updatedBook = new Book({
       ...book,
-      ...validateValues,
+      ...validateFields,
       updated_at: new Date(),
     });
-
+    
     const result = this.repository.updateData(id, updatedBook);
 
     return result;

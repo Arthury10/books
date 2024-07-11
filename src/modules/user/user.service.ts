@@ -2,6 +2,7 @@ import Repository from "src/repository";
 import User from "./model/user.model";
 import { v4 as uuidv4 } from "uuid";
 import { CreateUserType, FilterTypes, UpdateUserType } from "./types";
+import Utils from "src/utils";
 
 class UserService {
   constructor(
@@ -50,9 +51,11 @@ class UserService {
       throw new Error(`Usuário com ID ${id} não encontrado`);
     }
 
+    const validateFields = Utils.validateEmptyFields(update);
+
     const updatedUser = new User({
       ...user,
-      ...update,
+      ...validateFields,
       updated_at: new Date(),
     });
 

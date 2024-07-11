@@ -1,71 +1,211 @@
 import Book from "src/modules/book/model/book.model";
 import Rent from "src/modules/rent/model/rent.model";
 import Utils from "src/utils";
+import RentService from "../rent.service";
+import BookService from "src/modules/book/book.service";
+import UserService from "src/modules/user/user.service";
+import { RentStatus } from "../types";
 
 class RentUI {
-  static rent() {
-    console.log("-".repeat(50));
-    console.log("Alugar livro");
-    console.log(
-      "-- Todos os livros tem um prazo de 7 dias apartir da hora do aluguel --"
+  constructor(
+    private readonly rentService: RentService,
+    private readonly bookService: BookService,
+    private readonly userService: UserService
+  ) {}
+
+  public list(): void {
+    const rents = this.rentService.findAllRents();
+    const getUserName = (id: string) => {
+      const user = this.userService.findUserById(id);
+      return user?.name;
+    };
+    const getBookName = (id: string) => {
+      const book = this.bookService.findBookById(id);
+      return book?.name;
+    };
+
+    Utils.clearConsole();
+
+    Utils.spaceConsole(1, { separator: "-", size: 50 });
+    Utils.textConsole("Lista de livros alugados");
+    Utils.spaceConsole(1, { separator: "-", size: 50 });
+
+    const optionView = Utils.getNumberInput(
+      "Visualizar em (1 - coluna | 2 - linha | 3 - tabela (Resumo))"
     );
-    console.log("-".repeat(50));
 
-    const id = Number(Utils.getInput("ID do livro"));
+    if (optionView === 1) {
+      Utils.formatListViewColumn(rents);
+    } else if (optionView === 2) {
+      Utils.formatListViewRow(rents);
+    } else {
+      const formatRents = rents.map((rent) => ({
+        Usuario: getUserName(rent.user_id),
+        Livro: getBookName(rent.book_id),
+        Data: rent.created_at,
+        "Data Devolução": rent.devolution_date,
+        Status: rent.status,
+      }));
 
-    return id;
-  }
-
-  static return() {
-    console.log("-".repeat(50));
-    console.log("Devolver livro");
-    console.log("-".repeat(50));
-
-    const id = Number(Utils.getInput("ID do livro"));
-    return id;
-  }
-
-  static myBooks(rentedBooks: Rent[], book: Book[]) {
-    console.log("-".repeat(50));
-    console.log("Meus livros");
-    console.log("-".repeat(50));
-
-    console.table(this.formatMyBooksView(rentedBooks, book));
-
-    console.log("Gostaria de devolver algum livro?");
-    console.log("1 - Sim");
-    console.log("2 - Não");
-
-    const input = Number(Utils.getInput("Opção"));
-
-    if (input === 1) {
-      const id = Utils.getInput("ID do livro");
-      return id;
+      Utils.formatListTable(formatRents);
     }
 
-    return null;
+    Utils.pauseConsole();
+    Utils.clearConsole();
   }
 
-  static success() {
-    console.log("-".repeat(50));
-    console.log("Operação realizada com sucesso!");
-    console.log("-".repeat(50));
-  }
+  public create(userId: string): void {
+    const books = this.bookService.findAllBooks();
+    Utils.clearConsole();
 
-  static error() {
-    console.log("-".repeat(50));
-    console.log("Erro ao realizar operação");
-    console.log("-".repeat(50));
-  }
+    Utils.spaceConsole(1, { separator: "-", size: 50 });
+    Utils.textConsole("Alugar livro");
+    Utils.spaceConsole(1, { separator: "-", size: 50 });
+    const formatBooks = books.map((book) => ({
+      Titulo: book.name,
+      Autor: book.author,
+      Ano: book.release_year,
+      Paginas: book.pages,
+      Estado: book.rented ? "Indisponivel" : "Disponivel",
+    }));
 
-  private static formatMyBooksView(rentedBooks: Rent[], books: Book[]) {
-    const myBooks = books.map((book) => {
-      return {
-        name: book.name,
-      };
+    Utils.formatListTable(formatBooks);
+    Utils.spaceConsole(1, { separator: "-", size: 50 });
+
+    const bookId = Utils.getNumberInput("Indetificador do livro (Index)");
+
+    const bookRented = books[bookId];
+
+    if (bookRented.rented) {
+      Utils.textConsole("Livro indisponivel");
+      return;
+    }
+
+    const rent = this.rentService.createRent({
+      user_id: userId,
+      book_id: bookRented.id,
     });
 
-    console.table(myBooks);
+    if (!rent) {
+      this.error();
+      return;
+    }
+
+    this.success();
+
+    Utils.pauseConsole();
+    Utils.clearConsole();
+  }
+
+  public myBooks(userId: string): void {
+    const rents = this.rentService.findAllRents(
+      (rent) => rent.user_id === userId
+    );
+
+    const books = this.bookService.findAllBooks((book) => {
+      return rents.some((rent) => rent.book_id === book.id);
+    });
+
+    const formatBooks = books.map((book) => ({
+      Titulo: book.name,
+      Autor: book.author,
+      Ano: book.release_year,
+      Paginas: book.pages,
+      Estado: book.rented ? "Indisponivel" : "Disponivel",
+      "Entrega Data": rents.find((rent) => rent.book_id === book.id)
+        ?.devolution_date,
+    }));
+
+    Utils.formatListTable(formatBooks);
+
+    Utils.pauseConsole();
+    Utils.clearConsole();
+  }
+
+  public returnBook(userId: string): void {
+    const rents = this.rentService.findAllRents(
+      (rent) => rent.user_id === userId
+    );
+
+    const books = this.bookService.findAllBooks((book) => {
+      return rents.some((rent) => rent.book_id === book.id);
+    });
+
+    const formatBooks = books.map((book) => ({
+      Titulo: book.name,
+      Autor: book.author,
+      Ano: book.release_year,
+      Paginas: book.pages,
+      Estado: book.rented ? "Indisponivel" : "Disponivel",
+      "Entrega Data": rents.find((rent) => rent.book_id === book.id)
+        ?.devolution_date,
+    }));
+
+    Utils.formatListTable(formatBooks);
+
+    const bookId = Utils.getNumberInput("Indetificador do livro (Index)");
+
+    const book = books[bookId];
+
+    if (!book) {
+      Utils.textConsole("Livro não encontrado");
+      return;
+    }
+
+    const rent = rents.find((rent) => rent.book_id === book.id);
+
+    const updatedBook = this.bookService.updateBook({
+      id: book.id,
+      update: {
+        rented: false,
+      },
+    });
+
+    if (!rent) {
+      this.error();
+      return;
+    }
+
+    const updatedRent = this.rentService.updateRent({
+      id: rent.id,
+      update: {
+        status: RentStatus.RETURNED,
+      },
+    });
+
+    if (!updatedBook || !updatedRent) {
+      this.error();
+      return;
+    }
+
+    this.success();
+
+    Utils.pauseConsole();
+    Utils.clearConsole();
+  }
+
+  private success(): void {
+    Utils.clearConsole();
+
+    Utils.spaceConsole(1, { separator: "-", size: 50 });
+    Utils.textConsole("Operação realizada com sucesso");
+    Utils.spaceConsole(1, { separator: "-", size: 50 });
+  }
+
+  private error(): void {
+    Utils.clearConsole();
+
+    Utils.spaceConsole(1, { separator: "-", size: 50 });
+    Utils.textConsole("Erro ao realizar operação");
+    Utils.spaceConsole(1, { separator: "-", size: 50 });
+  }
+
+  private simpleViewColumnTableRent(rent: Rent[], fields: string[]): void {
+    Utils.spaceConsole(1, { separator: "-", size: 50 });
+    Utils.textConsole("Lista de livros alugados");
+    Utils.spaceConsole(1, { separator: "-", size: 50 });
+
+    Utils.formatListTable(rent, fields);
   }
 }
 

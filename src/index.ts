@@ -1,4 +1,3 @@
-import promptSync from "prompt-sync";
 import AuthUI from "./modules/auth/ui/auth.ui";
 import BookUI from "./modules/book/ui/book.ui";
 import RentUI from "./modules/rent/ui/rent.ui";
@@ -12,8 +11,6 @@ import UserUI from "./modules/user/ui/user.ui";
 
 type InputType = "initial" | "menuClient" | "menuAdmin";
 
-const prompt = promptSync();
-
 class Main {
   private _inputType: InputType = "initial";
 
@@ -21,7 +18,12 @@ class Main {
     private userService: UserService = new UserService(),
     private bookService: BookService = new BookService(),
     private rentService: RentService = new RentService(),
-    private authService: AuthService = new AuthService(new UserService())
+    private authService: AuthService = new AuthService(new UserService()),
+
+    //UI
+    private userUI: UserUI = new UserUI(userService, bookService, rentService),
+    private bookUI: BookUI = new BookUI(bookService, userService, rentService),
+    private rentUI: RentUI = new RentUI(rentService, bookService, userService)
   ) {
     this.init();
   }
@@ -63,33 +65,56 @@ class Main {
       const optionName = options.find((option) => option.id === input)?.name;
 
       switch (optionName) {
+        //Authentication
         case "Login":
           this.handleLogin();
           break;
         case "Register":
           this.handleRegister();
           break;
+        //BOOKS UI
         case "Listar Livros":
-          this.handleListBooks();
+          this.bookUI.list();
           break;
-        case "Alugar Livro":
-          this.handleRentBook();
-          break;
-        case "Devolver Livro":
-          this.handleReturnBook();
-          break;
-        case "Meus Livros":
-          this.handleMyBooks();
-          break;
-        case "Listar Usuários":
-          this.handleListUsers();
-          break;
-        case "Meu Perfil":
-          this.handleMyProfile();
+        case "Cadastrar Livro":
+          this.bookUI.create();
           break;
         case "Modificar Livro":
-          this.handleUpdateBook();
+          this.bookUI.update();
           break;
+        case "Deletar Livro":
+          this.bookUI.delete();
+          break;
+        //RENT UI
+        case "Listar Alugueis":
+          this.rentUI.list();
+          break;
+        case "Alugar Livro":
+          this.rentUI.create(Me.getInstance().id);
+          break;
+        case "Devolver Livro":
+          this.rentUI.returnBook(Me.getInstance().id);
+          break;
+        case "Meus Livros":
+          this.rentUI.myBooks(Me.getInstance().id);
+          break;
+        //USERS UI
+        case "Listar Usuários":
+          this.userUI.list();
+          break;
+        case "Cadastrar Usuário":
+          this.userUI.create();
+          break;
+        case "Modificar Usuário":
+          this.userUI.update();
+          break;
+        case "Deletar Usuário":
+          this.userUI.delete();
+          break;
+        case "Meu Perfil":
+          this.userUI.myProfile(Me.getInstance().id);
+          break;
+        // Rent UI
         case "Sair":
           this.logout();
           break;
@@ -125,8 +150,11 @@ class Main {
         "Listar Livros",
         "Cadastrar Livro",
         "Modificar Livro",
+        "Deletar Livro",
         "Listar Usuários",
         "Cadastrar Usuário",
+        "Modificar Usuário",
+        "Deletar Usuário",
         "Listar Alugueis",
         "Meu Perfil",
         "Sair",
@@ -142,16 +170,9 @@ class Main {
   }
 
   private handleLogin() {
-    // const data = AuthUI.login();
-    const TEMPUSER = {
-      email: "arthurropke@hotmail.com",
-      password: "123456",
-    };
-    const TEMPADMIN = {
-      email: "joao@teste.com",
-      password: "123",
-    };
-    const me = this.authService.login(TEMPADMIN);
+    const data = AuthUI.login();
+
+    const me = this.authService.login(data);
 
     Utils.clearConsole();
 
@@ -180,87 +201,6 @@ class Main {
     }
 
     Utils.pauseConsole();
-  }
-
-  private handleListBooks() {
-    const books = this.bookService.findAllBooks();
-    BookUI.list(books);
-    Utils.pauseConsole();
-  }
-
-  private handleRentBook() {
-    const books = this.bookService.findAllBooks();
-    BookUI.list(books);
-    const id = RentUI.rent();
-
-    const bookRent = books[id];
-
-    const rent = this.rentService.createRent({
-      book_id: bookRent.id,
-      user_id: Me.getInstance().id,
-    });
-
-    this.bookService.updateBook({
-      id: bookRent.id,
-      update: {
-        rented: true,
-        release_year: bookRent.release_year,
-        totalRents: (bookRent?.totalRents ?? 0) + 1,
-      },
-    });
-
-    if (rent) {
-      RentUI.success();
-    } else {
-      RentUI.error();
-    }
-
-    Utils.pauseConsole();
-  }
-
-  private handleReturnBook() {
-    // Implementar lógica para devolver livro
-  }
-
-  private handleMyBooks() {
-    const rentedBooks = this.rentService.findAllRents(
-      (rent) => rent.user_id === Me.getInstance().id
-    );
-
-    const books = this.bookService.findAllBooks((book) => {
-      return rentedBooks.some((rent) => rent.book_id === book.id);
-    });
-
-    RentUI.myBooks(rentedBooks, books);
-    Utils.pauseConsole();
-  }
-
-  private handleMyProfile() {
-    Utils.clearConsole();
-    const user = this.userService.findUserById(Me.getInstance().id);
-    if (user) {
-      UserUI.showUser(user);
-    }
-    Utils.pauseConsole();
-  }
-
-  private handleListUsers() {
-    const users = this.userService.findAllUsers();
-    UserUI.showUsers(users);
-    Utils.pauseConsole();
-  }
-
-  private handleUpdateBook() {
-    const books = this.bookService.findAllBooks();
-    const data = BookUI.update(books);
-
-    const bookUpdated = this.bookService.updateBook(data);
-
-    if (bookUpdated) {
-      BookUI.success();
-    } else {
-      BookUI.error();
-    }
   }
 }
 
