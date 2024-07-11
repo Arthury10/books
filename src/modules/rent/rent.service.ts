@@ -2,6 +2,7 @@ import Repository from "src/repository";
 import Rent from "./model/rent.model";
 import { v4 as uuidv4 } from "uuid";
 import { FilterType, CreateRentType, UpdateRentType } from "./types";
+import Utils from "src/utils";
 
 class RentService {
   constructor(
@@ -53,9 +54,11 @@ class RentService {
       return null;
     }
 
+    const validateFields = Utils.validateEmptyFields(update);
+
     const updatedRent = new Rent({
       ...rent,
-      ...update,
+      ...validateFields,
       updated_at: new Date(),
     });
 
